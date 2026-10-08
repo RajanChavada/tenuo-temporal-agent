@@ -1,0 +1,8 @@
+slug: northside-bakery
+name: Northside Bakery
+domain: your-site.vercel.app
+aliases: []
+one_liner: Northside Bakery bakes naturally leavened sourdough, croissants and seasonal pastries on Dundas Street West, Toronto.
+category: bakery
+competitors: []
+site: {repo: your-user/your-sandbox-site, base: main}

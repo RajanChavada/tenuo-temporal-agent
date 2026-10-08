@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northside Bakery | Sourdough and pastries in Toronto</title>
+<meta name="description" content="Northside Bakery bakes naturally leavened sourdough, croissants and seasonal pastries every morning on Dundas Street West, Toronto.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --flour: #f8f3ea; --crust: #9a4f1f; --crust-dark: #6e3511; --rye: #3a2a1f; --muted: #75655a;
+    --butter: #f3d58a; --card: #fffdf8; --line: #e6dccd;
+    --display: "Fraunces", Georgia, serif; --body: "Work Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--flour); color: var(--rye); font: 17px/1.6 var(--body); }
+  a { color: var(--crust); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding-inline: 24px; }
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; flex-wrap: wrap; }
+  .logo { font: 700 24px var(--display); color: var(--crust-dark); text-decoration: none; }
+  .links { display: flex; gap: 24px; font-weight: 500; font-size: 15px; flex-wrap: wrap; }
+  .links a { color: var(--rye); text-decoration: none; }
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; padding-block: 48px 72px; }
+  .hero h1 { font: 700 clamp(40px, 6vw, 68px)/1.02 var(--display); margin: 0; color: var(--crust-dark); letter-spacing: -1px; }
+  .hero p { font-size: 19px; color: var(--muted); max-width: 46ch; margin: 22px 0 30px; }
+  .btn { display: inline-block; background: var(--crust); color: #fff; padding: 13px 24px; border-radius: 999px; font-weight: 600; text-decoration: none; }
+  .btn.ghost { background: transparent; color: var(--crust); border: 2px solid var(--crust); margin-left: 10px; }
+  .loaf { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1.45; justify-self: center;
+    border-radius: 50% / 46%;
+    background: radial-gradient(ellipse at 40% 30%, #e0a463 0%, #c47a3a 38%, #9a4f1f 75%, #7a3a14 100%);
+    box-shadow: 0 34px 50px -18px rgba(110,53,17,.45), inset 0 -18px 30px rgba(70,30,8,.35); }
+  .loaf::before { content: ""; position: absolute; left: 18%; right: 18%; top: 34%; height: 26%;
+    border-top: 10px solid #f1d3a2; border-radius: 50% 50% 0 0 / 100% 100% 0 0; transform: rotate(-8deg);
+    filter: drop-shadow(0 4px 0 rgba(110,53,17,.35)); }
+  .loaf::after { content: ""; position: absolute; inset: 8% 10% 40% 14%; border-radius: 50%;
+    background: radial-gradient(ellipse at 40% 40%, rgba(255,232,190,.35), transparent 65%); }
+  section { padding-block: 56px; border-top: 1px solid var(--line); }
+  h2 { font: 700 34px var(--display); margin: 0 0 8px; color: var(--crust-dark); }
+  .lede { color: var(--muted); margin: 0 0 30px; max-width: 60ch; }
+  .menu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .item { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .item h3 { font: 600 21px var(--display); margin: 0 0 6px; }
+  .item p { margin: 0; color: var(--muted); font-size: 15px; }
+  .price { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--crust); }
+  .visit { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .hours { display: grid; grid-template-columns: max-content 1fr; gap: 6px 22px; }
+  .note { background: var(--butter); border-radius: 14px; padding: 22px 24px; }
+  footer { padding-block: 36px 56px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+  @media (max-width: 760px) {
+    .hero, .visit { grid-template-columns: 1fr; }
+    .menu { grid-template-columns: 1fr; }
+    .loaf { max-width: 320px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="logo" href="/">Northside Bakery</a>
+    <div class="links"><a href="#menu">Menu</a><a href="#visit">Visit</a><a href="#order">Order ahead</a></div>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <h1>Bread worth getting up early for.</h1>
+      <p>Naturally leavened sourdough, hand-laminated croissants and seasonal pastries, baked every morning on Dundas Street West since 2019.</p>
+      <a class="btn" href="#order">Order ahead</a><a class="btn ghost" href="#menu">See the menu</a>
+    </div>
+    <div class="loaf" role="img" aria-label="A scored sourdough loaf"></div>
+  </div>
+
+  <section id="menu">
+    <h2>From the oven</h2>
+    <p class="lede">Every loaf proofs for at least 18 hours with flour milled in Ontario. The pastry case changes with whatever the Saturday market brings us.</p>
+    <div class="menu">
+      <div class="item"><h3>Country sourdough</h3><p>Our everyday loaf: open crumb, dark blistered crust, a little tang.</p><span class="price">$9</span></div>
+      <div class="item"><h3>Butter croissant</h3><p>Laminated by hand over three days with cultured butter.</p><span class="price">$4.50</span></div>
+      <div class="item"><h3>Cardamom bun</h3><p>Weekends only. Swedish style, knotted, finished with pearl sugar.</p><span class="price">$5</span></div>
+      <div class="item"><h3>Seeded rye</h3><p>Dense, dark and full of sunflower, flax and pumpkin seeds.</p><span class="price">$10</span></div>
+      <div class="item"><h3>Fruit galette</h3><p>Whatever is in season, on a flaky rye crust.</p><span class="price">$6</span></div>
+      <div class="item"><h3>Celebration cakes</h3><p>Custom cakes for birthdays and weddings with 72 hours notice.</p><span class="price">from $48</span></div>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="visit">
+      <div>
+        <h2>Visit us</h2>
+        <p>1048 Dundas Street West, Toronto. A few seats by the window, coffee from a local roaster, and a bench outside for warm days.</p>
+        <div class="hours">
+          <span>Tuesday to Friday</span><span>7am to 4pm</span>
+          <span>Saturday and Sunday</span><span>8am to 3pm</span>
+          <span>Monday</span><span>Closed</span>
+        </div>
+      </div>
+      <div class="note" id="order">
+        <h2 style="font-size:26px">Order ahead</h2>
+        <p style="margin:0">Call (416) 555-0148 or email orders@northsidebakery.example to reserve loaves, order a cake, or set up wholesale delivery for your cafe or restaurant.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Northside Bakery is a fictional business used to demonstrate an AI website-fixing agent.</footer>
+</div>
+</body>
+</html>

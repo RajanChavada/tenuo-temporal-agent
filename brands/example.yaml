@@ -1,0 +1,10 @@
+slug: example
+name: Acme
+domain: acme.dev
+aliases: [Acme Tracing]
+one_liner: Acme is an open-source LLM tracing SDK for Python.
+category: LLM tracing tools
+# site: {repo: owner/name, base: main, root: public, code_root: ""}  # code_root: folder holding app/ or src/app/ (org-schema fix)
+competitors:
+  - {name: Beacon, domain: beacon.io, aliases: []}
+  - {name: Lumen, domain: lumen.ai, aliases: [LumenAI]}
