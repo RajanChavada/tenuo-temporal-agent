@@ -4,10 +4,11 @@ A fictional site for demonstrating the fix agent. `robots.txt` blocks ChatGPT's 
 
 ## Setup
 
-- Push this folder to the root of a sandbox repo (for example `your-user/your-sandbox-site`) and deploy it on Vercel.
-- Put the repo and the deployed domain (for example `your-site.vercel.app`) in `brands/northside-bakery.yaml`.
+- Local mode needs nothing: `fixagent demo init` copies `public/` into `.fixagent/site`.
+- For a real repo, push this folder's contents (with `public/`) to a sandbox repo, deploy on Vercel (it serves `public/`), and set `domain` and `site.repo` in `brands/northside-bakery.yaml`.
 - `uv run fixagent gates northside-bakery` should show `robots:OAI-SearchBot` and `robots:ChatGPT-User` failing.
 
 ## Reset between runs
 
-Revert the merge on the sandbox repo so `robots.txt` blocks the bots again, wait for the redeploy, and check `fixagent gates northside-bakery` fails again.
+- Local: `uv run fixagent demo init --reset`.
+- Real repo: revert the merge so `robots.txt` blocks the bots again, wait for the redeploy, and check `fixagent gates northside-bakery` fails again.

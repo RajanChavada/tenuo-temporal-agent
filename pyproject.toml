@@ -18,7 +18,11 @@ dependencies = [
 fixagent = "fixagent.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8", "respx>=0.21"]
+dev = [
+    "honcho>=2.0.0",
+    "pytest>=8",
+    "respx>=0.21",
+]
 
 [build-system]
 requires = ["hatchling"]
