@@ -1,10 +1,8 @@
-"""Propose fixes for a brand's site repo, and apply them as one pull request."""
+"""Propose fixes for a brand's site repo."""
 import posixpath
 from dataclasses import dataclass
-from datetime import datetime, timezone
 
 from fixagent.execute.fixes import allow_search_bots, llms_txt, robots_problems
-from fixagent.execute.warrant import BRANCH_PREFIX
 
 FILES = ("robots.txt", "llms.txt")
 
@@ -39,13 +37,3 @@ def propose(brand, site: dict, read) -> tuple[list[Change], list[str]]:
     else:
         skipped.append("llms.txt: already exists, not overwritten")
     return changes, skipped
-
-
-def open_fix_pr(changes: list[Change], gh, site: dict, notes: str = "") -> str:
-    repo, base = site["repo"], site.get("base", "main")
-    branch = BRANCH_PREFIX + "aeo-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    gh.create_branch(repo, base, branch)
-    for c in changes:
-        gh.write_file(repo, branch, c.path, c.after, c.reason)
-    body = "\n".join(f"- `{c.path}`: {c.reason}" for c in changes) + (f"\n\n{notes}" if notes else "")
-    return gh.open_pr(repo, base, branch, "AI visibility fixes", body)

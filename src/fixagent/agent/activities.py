@@ -6,6 +6,7 @@ Dependencies are set once per worker process through `configure(...)`, so tests 
 """
 import json
 import posixpath
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -14,7 +15,6 @@ from temporalio.exceptions import ApplicationError
 
 from fixagent.config import load_brand
 from fixagent.execute import keys
-from fixagent.execute.executor import SAFE_BRANCH
 from fixagent.execute.fixes_org import (check_facts, insert, layout_paths, org_jsonld, org_schema_notes, page_links,
                                       page_title, skip_reason)
 from fixagent.execute.runner import propose, site_paths
@@ -22,6 +22,7 @@ from fixagent.gates import _get as fetch_page, check_gates
 
 MAX_TEXT = 20_000
 MAX_TITLE = 200
+SAFE_BRANCH = re.compile(r"fixagent/[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
 @dataclass

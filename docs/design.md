@@ -72,12 +72,7 @@ How the fix agent is put together, and why. Terse on purpose.
 - `AnthropicLLM` is the first adapter (`claude-opus-5-5` with server-side fallbacks; `FIX_MODEL` overrides).
 - `ScriptedLLM` drives tests; `DemoLLM` plays a fixed script that falls for the planted note, for recorded demos with no API spend.
 
-## 9. Older MCP path
-
-- `execute/executor.py` and `execute/minter.py` are an earlier, non-Temporal design: an executor and a minter as separate MCP stdio processes, with `TenuoMiddleware` and a `NonceStore`.
-- The Temporal agent reuses their policy (`SAFE_BRANCH`, `FIX_TYPES`, path rules, `_write_caps`). The MCP servers themselves are not started by anything in this repo.
-
-## 10. Limits
+## 9. Limits
 
 - All four workers run as one OS user. Someone with a shell as that user can read every Keychain item. The next step is a separate user or host per role.
 - macOS Keychain only (`/usr/bin/security`).

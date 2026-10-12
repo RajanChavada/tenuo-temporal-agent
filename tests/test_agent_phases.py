@@ -4,7 +4,7 @@ import pytest
 from tenuo import Authorizer, SigningKey
 from tenuo.exceptions import TenuoError
 
-from fixagent.agent.phases import phase_problem, phase_warrant
+from fixagent.agent.phases import _path_problem, phase_problem, phase_warrant
 
 ISSUER, HOLDER = SigningKey.generate(), SigningKey.generate()
 CTX = {"slug": "acme", "repo": "acme/site", "base": "main", "domain": "acme.com", "root": "public", "code_root": "web"}
@@ -87,3 +87,13 @@ def test_minter_allows_catalog_write():
 def test_explore_without_a_root_is_refused_not_widened():
     ctx = {k: v for k, v in CTX.items() if k != "root"}
     assert "root and code_root" in phase_problem("explore", ctx, lambda repo: True)
+
+
+@pytest.mark.parametrize("fix,path,bad", [
+    ("site-files", "public/robots.txt", False), ("site-files", "public/../robots.txt", True),
+    ("site-files", "/etc/robots.txt", True), ("site-files", ".github/workflows/ci.yml", True),
+    ("site-files", "app/layout.tsx", True), ("org-schema", "frontend/src/app/layout.jsx", False),
+    ("org-schema", "public/robots.txt", True), ("org-schema", "frontend/app/page.tsx", True),
+    ("org-schema", "frontend/../app/layout.tsx", True)])
+def test_each_fix_type_has_its_own_paths(fix, path, bad):
+    assert _path_problem(fix, path) is bad

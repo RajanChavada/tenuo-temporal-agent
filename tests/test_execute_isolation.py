@@ -1,4 +1,4 @@
-"""Only the executor process may hold a GitHub token or talk to the GitHub API.
+"""Only the executor worker role may hold a GitHub token or talk to the GitHub API.
 
 `agent/run.py` loads secrets per Temporal worker role: the executor role gets GitHub tokens, the minter role the
 issuer key. Each role runs in its own process.
@@ -23,22 +23,17 @@ def test_only_the_github_module_names_the_github_api():
 
 def test_only_the_executor_imports_the_github_client():
     users = [name for name, text in _sources().items() if "fixagent.execute.github" in text]
-    assert sorted(users) == ["agent/run.py", "execute/executor.py"]
+    assert sorted(users) == ["agent/run.py"]
 
 
 def test_only_the_executor_reads_a_github_token_from_the_keychain():
     users = [n for n, t in _sources().items() if re.search(r"(?<!set_)github_token\(", t) and n != "execute/keys.py"]
-    assert sorted(users) == ["agent/run.py", "execute/executor.py"]
+    assert sorted(users) == ["agent/run.py"]
 
 
 def test_only_the_minter_reads_the_issuer_signing_key():
     users = [n for n, t in _sources().items() if re.search(r"\bissuer_key\b", t) and n != "execute/keys.py"]
-    assert sorted(users) == ["agent/run.py", "execute/minter.py"]
-
-
-def test_the_cli_starts_the_minter_and_executor_but_imports_neither():
-    cli = _sources()["cli.py"]
-    assert "fixagent.execute.minter" not in cli and "fixagent.execute.executor" not in cli
+    assert sorted(users) == ["agent/run.py"]
 
 
 def test_agent_secrets_load_only_for_their_worker_role():

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fixagent.config import load_brand
-from fixagent.execute.runner import open_fix_pr, propose, site_paths
+from fixagent.execute.runner import propose, site_paths
 
 BLOCKED = "User-agent: OAI-SearchBot\nDisallow: /\n\nUser-agent: *\nDisallow: /admin\n"
 
@@ -35,30 +35,3 @@ def test_propose_notes_missing_robots():
     changes, skipped = propose(brand(), {"root": "public"}, {}.get)
     assert [c.path for c in changes] == ["public/llms.txt"]
     assert skipped == ["robots.txt: none found, crawlers allowed"]
-
-
-class FakeGitHub:
-    def __init__(self):
-        self.calls = []
-
-    def create_branch(self, repo, base, branch):
-        self.calls.append(("branch", repo, base, branch))
-
-    def write_file(self, repo, branch, path, text, message):
-        self.calls.append(("write", path, branch))
-
-    def open_pr(self, repo, base, head, title, body):
-        self.calls.append(("pr", base, head, body))
-        return "https://github.com/acme/site/pull/1"
-
-
-def test_open_fix_pr_writes_every_change_on_one_fixagent_branch():
-    changes, _ = propose(brand(), {}, {"robots.txt": BLOCKED}.get)
-    gh = FakeGitHub()
-    url = open_fix_pr(changes, gh, {"repo": "acme/site"})
-    branch = gh.calls[0][3]
-    assert gh.calls[0][:3] == ("branch", "acme/site", "main") and branch.startswith("fixagent/aeo-")
-    assert [c[0] for c in gh.calls] == ["branch", "write", "write", "pr"]
-    assert gh.calls[1][2] == gh.calls[2][2] == gh.calls[3][2] == branch
-    assert "- `robots.txt`: Let AI search bots read the site" in gh.calls[3][3]
-    assert url == "https://github.com/acme/site/pull/1"

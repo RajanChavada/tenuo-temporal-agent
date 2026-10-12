@@ -7,8 +7,22 @@ import re
 
 from tenuo import All, Exact, Not, Range, Regex, SigningKey, Subset, Warrant, Wildcard
 
-from fixagent.execute.minter import FIX_TYPES, SAFE_BASE, _path_problem
 from fixagent.execute.warrant import BRANCH_PREFIX, _write_caps
+
+FILES = ("robots.txt", "llms.txt")
+FIX_TYPES = ("site-files", "org-schema")
+LAYOUT = re.compile(r"(?:[A-Za-z0-9._-]+/)*(?:src/)?app/layout\.(?:tsx|jsx)")
+SAFE_BASE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]*")
+
+
+def _path_problem(fix: str, path: str) -> bool:
+    parts = path.split("/")
+    if path.startswith("/") or ".." in parts:
+        return True
+    if fix == "org-schema":
+        return not LAYOUT.fullmatch(path)
+    return parts[-1] not in FILES
+
 
 PHASES = ("explore", "build", "write", "poll", "verify")
 TTL = {"explore": 900, "build": 300, "write": 300, "poll": 300, "verify": 2100}

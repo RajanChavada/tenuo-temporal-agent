@@ -7,7 +7,7 @@ Things learned wiring Tenuo 0.3.1 (`tenuo[temporal]`) into Temporal workers. Eac
 - **PoP is valid about 60 s from when the call is scheduled.** The verifier uses 30 s windows and accepts ±5 of them (±60 s, per `tenuo/temporal/_constants.py`). A call that sits in the task queue longer than that is denied, so a worker outage turns into a denial.
   - Fix: `schedule_to_start_timeout=45s`, catch the `SCHEDULE_TO_START` timeout, sleep, and schedule again with a fresh PoP. Re-mint the warrant first if it is within 60 s of expiry. See `FixRunWorkflow._call` in `agent/workflow.py`.
 - **Tests need a real local Temporal server.** PoP signatures carry wall-clock timestamps, so the time-skipping test server breaks them. `tests/test_agent_workflow.py` uses `WorkflowEnvironment.start_local()` with timings shortened to seconds.
-- **Replay protection on the MCP path.** `MCPVerifier(nonce_store=NonceStore(...))` denies a signed call it has seen before. Because PoP changes every 30 s window, two identical calls (same tool, arguments and key) inside one window collide, and the second is denied. See `execute/executor.py`. On Temporal the plugin takes a `pop_dedup_store` (`InMemoryPopDedupStore` in `agent/workers.py`).
+- **Replay protection.** On Temporal the plugin takes a `pop_dedup_store` (`InMemoryPopDedupStore` in `agent/workers.py`).
 
 ## Warrants and arguments
 
@@ -27,7 +27,6 @@ Things learned wiring Tenuo 0.3.1 (`tenuo[temporal]`) into Temporal workers. Eac
 - **Without a `control_plane`, the plugin creates its own Tenuo Cloud client from the environment and sends full arguments.** Pass a wrapper instead. `RedactingCloud` replaces free text with its byte size, and is falsy when there is no real client, so the plugin neither emits nor creates one.
 - **`redact_args_in_logs` defaults to blanking every value.** That hides the repo, path and branch you need to understand a denial. This repo sets `redact_args_in_logs=False` and redacts only free text itself (`redact()` and `RedactingCloud`).
 - **The minter runs on a plain client.** Its activity signs warrants and is not warrant-checked, so it gets no plugin.
-- **beartype breaks the workflow sandbox.** fastmcp loads beartype's import hook, which breaks sandboxed re-imports. Fix: `SandboxRestrictions.default.with_passthrough_modules("beartype")`.
 
 ## Tenuo Cloud client (0.3.1)
 
