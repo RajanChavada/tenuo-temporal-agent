@@ -4,9 +4,10 @@ from pathlib import Path
 import typer
 from dotenv import load_dotenv
 
+from fixagent import local
 from fixagent.config import load_brand
 from fixagent.execute import keys
-from fixagent.gates import check_gates
+from fixagent.gates import _get as live_get, check_gates
 
 load_dotenv()
 app = typer.Typer(no_args_is_help=True)
@@ -20,7 +21,7 @@ def main() -> None:
 @app.command()
 def gates(slug: str) -> None:
     """Check whether AI crawlers can reach and read the brand's site."""
-    for r in check_gates(load_brand(slug).domain):
+    for r in check_gates(load_brand(slug).domain, get=local.fetch if local.enabled() else live_get):
         typer.echo(f"{r['status']:<8} {r['gate']:<22} {r['detail']}")
 
 
@@ -45,6 +46,37 @@ def keys_github(repo: str) -> None:
         raise typer.Exit(1)
     keys.set_github_token(repo, token.strip())
     typer.echo(f"Stored the token for {repo}.")
+
+
+demo_app = typer.Typer(no_args_is_help=True)
+app.add_typer(demo_app, name="demo", help="Local mode: the demo site as a local git repo, no GitHub or hosting.")
+
+
+@demo_app.command("init")
+def demo_init(reset: bool = typer.Option(False, "--reset", help="Start over: delete the site repo and its pull requests")) -> None:
+    """Create the keys and the demo site repo in .fixagent/. Needs FIXAGENT_LOCAL=1."""
+    if not local.enabled():
+        typer.echo("stopped: set FIXAGENT_LOCAL=1 (cp .env.example .env)")
+        raise typer.Exit(1)
+    keys.init_issuer()
+    keys.init_holder()
+    _stopped_on_error(lambda: local.init_site(reset))
+    typer.echo(f"Site repo ready in {local.SITE_DIR}. Next: uv run honcho start")
+
+
+pr_app = typer.Typer(no_args_is_help=True)
+app.add_typer(pr_app, name="pr", help="Local mode: review and merge the agent's pull requests.")
+
+
+@pr_app.command("merge")
+def pr_merge(number: int) -> None:
+    """Show a pull request's diff and merge it into main. A person merges: no warrant lets the agent."""
+    git = local.LocalGit()
+    typer.echo(_stopped_on_error(lambda: git.diff(number)))
+    if not typer.confirm(f"Merge pull request {number}?"):
+        raise typer.Exit(1)
+    _stopped_on_error(lambda: git.merge(number))
+    typer.echo(f"Merged. {local.SITE_URL} serves it now.")
 
 
 fixrun_app = typer.Typer()
