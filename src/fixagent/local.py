@@ -58,12 +58,12 @@ class LocalGit:
 
     def list_dir(self, repo: str, path: str, ref: str) -> list[str]:
         d = path.strip("/")
-        r = self._run("ls-tree", "-z", ref, *([d + "/"] if d else []))
+        r = self._run("ls-tree", "-z", ref, "--", *([d + "/"] if d else []))
         rows = [e.split("\t", 1) for e in r.stdout.split("\0") if e] if r.returncode == 0 else []
         return [p + ("/" if meta.split()[1] == "tree" else "") for meta, p in rows]
 
     def create_branch(self, repo: str, base: str, branch: str) -> None:
-        self._git("branch", branch, base)
+        self._git("branch", "--", branch, base)
 
     def write_file(self, repo: str, branch: str, path: str, text: str, message: str) -> None:
         """Commit one file to `branch` through a scratch index, so the served checkout of main never changes."""
@@ -102,6 +102,8 @@ class LocalGit:
         pr = self._pr(number)
         if self.pr_state(pr["repo"], number) == "merged":
             raise RuntimeError(f"pull request {number} is already merged")
+        if self._git("symbolic-ref", "--short", "HEAD").strip() != pr["base"]:
+            raise RuntimeError(f"check out {pr['base']} in {self.path} first")
         self._git("merge", "-q", "--no-ff", pr["head"], "-m", f"Merge pull request #{number}: {pr['title']}")
 
 

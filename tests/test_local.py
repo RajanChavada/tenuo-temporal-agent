@@ -31,13 +31,25 @@ def test_pull_request_goes_live_only_when_merged(site):
     url = git.open_pr("local/x", "main", "fixagent/a", "AI visibility fixes", "body")
     assert url == "local://local/x/pull/1" and git.pr_state("local/x", 1) == "open"
     assert "Disallow" in (path / "public" / "robots.txt").read_text()  # served tree untouched before the merge
+    assert not (path / "public" / "llms.txt").exists()
     assert "+Allow: /" in git.diff(1) and "public/llms.txt" in git.diff(1)
     git.merge(1)
     assert git.pr_state("local/x", 1) == "merged" and (path / "public" / "llms.txt").exists()
+    assert "Allow: /" in (path / "public" / "robots.txt").read_text()
     with pytest.raises(RuntimeError, match="already merged"):
         git.merge(1)
     with pytest.raises(RuntimeError, match="no local pull request 2"):
         git.pr_state("local/x", 2)
+
+
+def test_merge_needs_the_base_checked_out(site):
+    _, git = site
+    git.create_branch("local/x", "main", "fixagent/a")
+    git.write_file("local/x", "fixagent/a", "public/llms.txt", "x", "m")
+    git.open_pr("local/x", "main", "fixagent/a", "t", "b")
+    git._git("checkout", "-q", "-b", "other")
+    with pytest.raises(RuntimeError, match="check out main"):
+        git.merge(1)
 
 
 def test_init_site_refuses_to_overwrite_without_reset(site, tmp_path):
