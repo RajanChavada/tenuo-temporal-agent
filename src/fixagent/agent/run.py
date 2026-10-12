@@ -2,6 +2,7 @@
 import asyncio
 import json
 import os
+import time
 from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
@@ -14,6 +15,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.testing import WorkflowEnvironment
 
+from fixagent import local
 from fixagent.agent import activities as act
 from fixagent.agent.workers import RedactingCloud, redact, set_holder_key, worker
 from fixagent.agent.workflow import WORKFLOW_QUEUE, FixRunWorkflow, RunInput
@@ -43,8 +45,19 @@ def run_input(slug: str, brands_root: Path = Path("brands"), demo: bool = False)
     return replace(inp, **DEMO_TIMINGS) if demo else inp
 
 
-async def connect() -> Client:
-    return await Client.connect(os.environ.get("TEMPORAL_ADDRESS", ADDRESS))
+RETRY_SECS = 1
+
+
+async def connect(wait: float = 0) -> Client:
+    """Connect to Temporal, retrying for `wait` seconds: honcho starts the workers alongside the server."""
+    deadline = time.monotonic() + wait
+    while True:
+        try:
+            return await Client.connect(os.environ.get("TEMPORAL_ADDRESS", ADDRESS))
+        except RuntimeError:
+            if time.monotonic() >= deadline:
+                raise
+            await asyncio.sleep(RETRY_SECS)
 
 
 async def _schedule_of(client: Client, slug: str) -> ScheduleDescription | None:
@@ -118,10 +131,15 @@ def configure_role(role: str, demo: bool = False) -> None:
     if role == "workflow":
         set_holder_key(keys.holder_key())
     elif role == "minter":
-        act.configure(act.Deps(issuer=keys.issuer_key(), holder_public_key=keys.holder_public_key()))
+        onboarded = local.is_local_repo if local.enabled() else keys.is_onboarded
+        act.configure(act.Deps(issuer=keys.issuer_key(), holder_public_key=keys.holder_public_key(),
+                               is_onboarded=onboarded))
     elif role == "executor":
-        from fixagent.execute.github import GitHub
-        act.configure(act.Deps(github=lambda repo: GitHub(keys.github_token(repo))))
+        if local.enabled():
+            act.configure(act.Deps(github=lambda repo: local.LocalGit(), fetch=local.fetch))
+        else:
+            from fixagent.execute.github import GitHub
+            act.configure(act.Deps(github=lambda repo: GitHub(keys.github_token(repo))))
     elif role == "llm":
         from fixagent.agent.demo import DemoLLM
         from fixagent.agent.llm import AnthropicLLM
@@ -142,7 +160,7 @@ async def run_worker(role: str, demo: bool = False) -> None:
     configure_role(role, demo)
     cloud = RedactingCloud(cloud_client()) if role != "minter" else None
     audit = audit_event if role in ("executor", "llm") else None
-    await worker(role, await connect(), issuer_public_key, cloud, audit).run()
+    await worker(role, await connect(wait=120), issuer_public_key, cloud, audit).run()
 
 
 def audit_rows(path: Path, workflow_id: str, offset: int) -> tuple[list[dict], int]:

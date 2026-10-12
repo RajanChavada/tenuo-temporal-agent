@@ -1,6 +1,11 @@
+import asyncio
+
 import pytest
 from typer.testing import CliRunner
 
+from fixagent import local
+from fixagent.agent import activities as act
+from fixagent.agent import run as run_mod
 from fixagent.agent.run import run_id, run_input
 from fixagent.cli import app
 
@@ -39,3 +44,26 @@ def test_fixrun_start_unknown_slug_is_one_line(monkeypatch):
     monkeypatch.setattr("fixagent.agent.run.connect", client)
     r = CliRunner().invoke(app, ["fixrun", "start", "no-such-brand"])
     assert r.exit_code == 1 and r.output.startswith("stopped: ")
+
+
+def test_local_mode_swaps_github_fetch_and_onboarding(monkeypatch):
+    monkeypatch.setenv("FIXAGENT_LOCAL", "1")
+    monkeypatch.setattr(run_mod.keys, "issuer_key", lambda: "issuer")
+    monkeypatch.setattr(run_mod.keys, "holder_public_key", lambda: "holder")
+    run_mod.configure_role("executor")
+    assert isinstance(act.DEPS.github("local/northside-bakery"), local.LocalGit) and act.DEPS.fetch is local.fetch
+    run_mod.configure_role("minter")
+    assert act.DEPS.is_onboarded is local.is_local_repo
+
+
+def test_connect_retries_while_temporal_starts(monkeypatch):
+    calls = []
+
+    async def flaky(address):
+        calls.append(address)
+        if len(calls) < 3:
+            raise RuntimeError("Failed client connect")
+        return "client"
+    monkeypatch.setattr(run_mod.Client, "connect", flaky)
+    monkeypatch.setattr(run_mod, "RETRY_SECS", 0)
+    assert asyncio.run(run_mod.connect(wait=5)) == "client" and len(calls) == 3
