@@ -31,5 +31,5 @@ Things learned wiring Tenuo 0.3.1 (`tenuo[temporal]`) into Temporal workers. Eac
 ## Tenuo Cloud client (0.3.1)
 
 - **Registration takes about 0.4 s, and events sent before it are dropped.** `cloud_client()` in `execute/warrant.py` waits up to 10 s for `authorizer_id`.
-- **Audit events go out on a 10 s timer, and `shutdown()` panics with "no reactor running".** A short-lived process must wait about 11 s before exiting instead of calling `shutdown()` (`CLOUD_SEND_SECS`).
+- **Audit events go out on a 10 s timer, and `shutdown()` panics with "no reactor running".** A short-lived process must wait about 11 s before exiting instead of calling `shutdown()`.
 - **The panic is a pyo3 `PanicException`, which is a `BaseException`.** `except Exception` does not catch it. Cloud calls catch `BaseException` but re-raise `KeyboardInterrupt` and `SystemExit` (`_FATAL`).
