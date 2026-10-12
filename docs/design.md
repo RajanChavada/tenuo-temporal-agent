@@ -15,7 +15,7 @@ How the fix agent is put together, and why. Terse on purpose.
   - `minter`: the issuer key. Signs phase warrants. Its activity is not warrant-checked; it enforces its own policy.
   - `executor`: GitHub tokens, one per repo. Runs site and repo activities after Tenuo checks the warrant.
   - `llm`: the model API key. Runs `llm_turn` after Tenuo checks the warrant.
-- Secrets live in the macOS Keychain (`fixagent keys init`, `fixagent keys github <repo>`).
+- Secrets live in the Keychain on macOS, and in 0600 files (`.fixagent/keys`) in local mode and on Linux (`fixagent keys init`, `fixagent keys github <repo>`).
 - `keys.put` passes the secret to `security add-generic-password` on stdin, so it never shows in the process list.
 - `tests/test_execute_isolation.py` fails if any module other than the expected ones reads a GitHub token, names the GitHub API, or reads the issuer signing key, and checks no worker role loads another role's secret.
 
@@ -75,5 +75,5 @@ How the fix agent is put together, and why. Terse on purpose.
 ## 9. Limits
 
 - All four workers run as one OS user. Someone with a shell as that user can read every Keychain item. The next step is a separate user or host per role.
-- macOS Keychain only (`/usr/bin/security`).
+- Keychain on macOS (`/usr/bin/security`); 0600 files in local mode and on Linux (`.fixagent/keys`).
 - Workflow tests run on a real local Temporal server, not the time-skipping one, because proof-of-possession signatures use wall-clock time.

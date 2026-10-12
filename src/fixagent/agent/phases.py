@@ -7,9 +7,8 @@ import re
 
 from tenuo import All, Exact, Not, Range, Regex, SigningKey, Subset, Warrant, Wildcard
 
+from fixagent.execute.runner import FILES
 from fixagent.execute.warrant import BRANCH_PREFIX, _write_caps
-
-FILES = ("robots.txt", "llms.txt")
 FIX_TYPES = ("site-files", "org-schema")
 LAYOUT = re.compile(r"(?:[A-Za-z0-9._-]+/)*(?:src/)?app/layout\.(?:tsx|jsx)")
 SAFE_BASE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]*")

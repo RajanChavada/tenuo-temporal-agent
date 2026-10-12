@@ -28,7 +28,7 @@ def is_local_repo(repo: str) -> bool:
 
 
 def fetch(url: str) -> tuple[int | None, str]:
-    """A page of the live site, from the local server. ponytail: one site per machine, any domain maps to it."""
+    """A page of the live site, from the local server. Ceiling: one site per machine; every domain maps to it."""
     return _get(SITE_URL + urlsplit(url).path)
 
 

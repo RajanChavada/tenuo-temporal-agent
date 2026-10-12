@@ -1,6 +1,9 @@
 import asyncio
+import logging
+import sys
 
 import pytest
+from temporalio.exceptions import ApplicationError
 from typer.testing import CliRunner
 
 from fixagent import local
@@ -67,3 +70,23 @@ def test_connect_retries_while_temporal_starts(monkeypatch):
     monkeypatch.setattr(run_mod.Client, "connect", flaky)
     monkeypatch.setattr(run_mod, "RETRY_SECS", 0)
     assert asyncio.run(run_mod.connect(wait=5)) == "client" and len(calls) == 3
+
+
+def _record(err: Exception) -> logging.LogRecord:
+    try:
+        raise err
+    except Exception:
+        return logging.LogRecord("temporalio.activity", logging.WARNING, __file__, 1, "Completing activity as failed",
+                                 None, sys.exc_info())
+
+
+def test_quiet_denials_strips_only_tenuo_denials():
+    from tenuo.exceptions import ToolNotAuthorized
+    from tenuo.temporal.exceptions import _build_non_retryable_application_error
+    denial = _build_non_retryable_application_error(ToolNotAuthorized("write_file"))
+    denied, bug = _record(denial), _record(ApplicationError("boom"))
+    assert denial.__cause__ is not None
+    for r in (denied, bug):
+        assert run_mod.QuietDenials().filter(r)
+    assert denied.exc_info is None
+    assert bug.exc_info is not None

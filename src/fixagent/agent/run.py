@@ -1,12 +1,15 @@
 """Start, inspect and schedule fix runs, and run the worker processes. Used by `fixagent fixrun` and `fixagent worker`."""
 import asyncio
 import json
+import logging
 import os
 import time
 from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 
+from tenuo.exceptions import TenuoError
+from tenuo.temporal.exceptions import TenuoTemporalError
 from temporalio.client import (Client, Schedule, ScheduleActionStartWorkflow, ScheduleAlreadyRunningError,
                                ScheduleDescription, ScheduleIntervalSpec, ScheduleOverlapPolicy, SchedulePolicy,
                                ScheduleSpec, WorkflowExecutionStatus)
@@ -155,9 +158,19 @@ def audit_event(event) -> None:
                                            event.denial_reason or "")
 
 
+class QuietDenials(logging.Filter):
+    """Tenuo denials are expected (fixrun watch shows them): one line, no traceback."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.exc_info and isinstance(record.exc_info[1].__cause__, (TenuoError, TenuoTemporalError)):
+            record.exc_info = record.exc_text = None
+        return True
+
+
 async def run_worker(role: str, demo: bool = False) -> None:
     issuer_public_key = keys.issuer_public_key()
     configure_role(role, demo)
+    logging.getLogger("temporalio.activity").addFilter(QuietDenials())
     cloud = RedactingCloud(cloud_client()) if role != "minter" else None
     audit = audit_event if role in ("executor", "llm") else None
     await worker(role, await connect(wait=120), issuer_public_key, cloud, audit).run()

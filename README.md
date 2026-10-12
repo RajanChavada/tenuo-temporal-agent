@@ -94,7 +94,7 @@ In a second terminal:
 ```bash
 uv run fixagent fixrun start northside-bakery --demo
 uv run fixagent fixrun watch northside-bakery     # green ALLOWED, red DENIED, live
-uv run fixagent pr merge 1                        # you are the reviewer: read the diff, merge
+uv run fixagent pr merge 1                        # you are the reviewer: read the diff, answer y
 ```
 
 The run checks the site again and ends `verified`. Start over with `uv run fixagent demo init --reset`.

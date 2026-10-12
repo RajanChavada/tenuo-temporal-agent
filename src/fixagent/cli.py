@@ -31,7 +31,7 @@ app.add_typer(keys_app, name="keys")
 
 @keys_app.command("init")
 def keys_init() -> None:
-    """Create the issuer and holder keys in the macOS Keychain, or in files in local mode (first run only) and print the issuer public key."""
+    """Create the issuer and holder keys in the macOS Keychain, or in 0600 files (local mode, Linux) (first run only) and print the issuer public key."""
     key = keys.init_issuer()
     keys.init_holder()
     typer.echo(f"Issuer public key: {bytes(key.public_key.to_bytes()).hex()}")
@@ -39,7 +39,7 @@ def keys_init() -> None:
 
 @keys_app.command("github")
 def keys_github(repo: str) -> None:
-    """Store a GitHub token for one repo in the macOS Keychain, or in files in local mode. Only the executor worker reads it."""
+    """Store a GitHub token for one repo in the macOS Keychain, or in 0600 files (local mode, Linux). Only the executor worker reads it."""
     token = typer.prompt(f"GitHub token for {repo}", hide_input=True)
     if not token.strip():
         typer.echo("no token entered")
