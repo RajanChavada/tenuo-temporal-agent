@@ -1,6 +1,10 @@
-"""Secrets for the fix executor, kept in the macOS Keychain through the `security` command."""
+"""Secrets for the fix agent: in the macOS Keychain through the `security` command, or in 0600 files in local mode and on other systems."""
 import base64
+import os
 import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import quote
 
 from tenuo import PublicKey, SigningKey
 
@@ -12,10 +16,19 @@ HOLDER_PUB_SERVICE = "fixagent-tenuo-holder-pub"
 GITHUB_SERVICE = "fixagent-github"
 SECURITY = "/usr/bin/security"  # absolute, so a PATH entry cannot substitute the Keychain tool
 NOT_FOUND = 44  # `security` exit code when no item matches
+KEY_DIR = Path(".fixagent/keys")  # file store: one 0600 file per secret, so each role still reads only its own
+
+
+def _file_store() -> bool:
+    return os.environ.get("FIXAGENT_LOCAL") == "1" or sys.platform != "darwin"
+
+
+def _key_file(service: str, account: str) -> Path:
+    return KEY_DIR / service / quote(account, safe="")  # repo names contain "/"
 
 
 class MissingKey(RuntimeError):
-    """A Keychain item the command needs is not set. The message says which command sets it."""
+    """A secret the command needs is not set. The message says which command sets it."""
 
 
 def _run(args: list[str], input: str | None = None) -> subprocess.CompletedProcess:
@@ -24,6 +37,9 @@ def _run(args: list[str], input: str | None = None) -> subprocess.CompletedProce
 
 
 def get(service: str, account: str, run=_run) -> str | None:
+    if _file_store():
+        f = _key_file(service, account)
+        return f.read_text().strip() if f.exists() else None
     r = run([SECURITY, "find-generic-password", "-s", service, "-a", account, "-w"])
     if r.returncode == NOT_FOUND:
         return None
@@ -34,6 +50,8 @@ def get(service: str, account: str, run=_run) -> str | None:
 
 def exists(service: str, account: str, run=_run) -> bool:
     """True when the item exists. Never asks for the secret (no `-w`)."""
+    if _file_store():
+        return _key_file(service, account).exists()
     r = run([SECURITY, "find-generic-password", "-s", service, "-a", account])
     if r.returncode == NOT_FOUND:
         return False
@@ -43,6 +61,13 @@ def exists(service: str, account: str, run=_run) -> bool:
 
 
 def put(service: str, account: str, secret: str, run=_run) -> None:
+    if _file_store():
+        f = _key_file(service, account)
+        f.parent.mkdir(parents=True, exist_ok=True)
+        os.chmod(KEY_DIR, 0o700)
+        with os.fdopen(os.open(f, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as out:
+            out.write(secret)
+        return
     # The secret goes on stdin, entered twice as `security` asks, so it never shows in the process list.
     r = run([SECURITY, "add-generic-password", "-s", service, "-a", account, "-U", "-w"], input=f"{secret}\n{secret}\n")
     if r.returncode != 0:

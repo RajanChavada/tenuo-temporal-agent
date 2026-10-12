@@ -1,8 +1,51 @@
+import os
+import stat
 import subprocess
 
 import pytest
 
 from fixagent.execute import keys
+
+
+@pytest.fixture(autouse=True)
+def keychain(monkeypatch):
+    """The Keychain tests use FakeKeychain; file-store tests switch this back on."""
+    monkeypatch.setattr(keys, "_file_store", lambda: False)
+
+
+@pytest.fixture
+def file_store(monkeypatch, tmp_path):
+    monkeypatch.setattr(keys, "_file_store", lambda: True)
+    monkeypatch.setattr(keys, "KEY_DIR", tmp_path / "keys")
+    return tmp_path / "keys"
+
+
+def test_file_store_round_trips_and_is_private(file_store):
+    assert keys.get(keys.GITHUB_SERVICE, "acme/site") is None and not keys.exists(keys.GITHUB_SERVICE, "acme/site")
+    keys.put(keys.GITHUB_SERVICE, "acme/site", "token-1")
+    keys.put(keys.GITHUB_SERVICE, "acme/site", "token-2")
+    assert keys.get(keys.GITHUB_SERVICE, "acme/site") == "token-2" and keys.exists(keys.GITHUB_SERVICE, "acme/site")
+    f = file_store / keys.GITHUB_SERVICE / "acme%2Fsite"
+    assert stat.S_IMODE(os.stat(f).st_mode) == 0o600 and stat.S_IMODE(os.stat(file_store).st_mode) == 0o700
+
+
+def test_file_store_keeps_one_file_per_secret(file_store):
+    issuer = keys.init_issuer()
+    keys.init_holder()
+    assert bytes(keys.issuer_public_key().to_bytes()) == bytes(issuer.public_key.to_bytes())
+    assert sorted(p.parent.name for p in file_store.rglob("*") if p.is_file()) == sorted(
+        [keys.ISSUER_SERVICE, keys.ISSUER_PUB_SERVICE, keys.HOLDER_SERVICE, keys.HOLDER_PUB_SERVICE])
+
+
+def test_file_store_is_used_off_macos_or_in_local_mode(monkeypatch):
+    monkeypatch.undo()  # drop the autouse pin, test the real switch
+    monkeypatch.delenv("FIXAGENT_LOCAL", raising=False)
+    monkeypatch.setattr(keys.sys, "platform", "linux")
+    assert keys._file_store()
+    monkeypatch.setattr(keys.sys, "platform", "darwin")
+    assert not keys._file_store()
+    monkeypatch.setenv("FIXAGENT_LOCAL", "1")
+    assert keys._file_store()
 
 
 class FakeKeychain:
