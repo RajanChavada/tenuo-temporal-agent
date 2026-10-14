@@ -4,6 +4,8 @@ An AI agent that fixes a website's `robots.txt`, `llms.txt` and Organization sch
 
 Reference implementation. Python package `fixagent`, CLI `fixagent`.
 
+[![Demo video: the agent is blocked from a prompt injection at the tool call](https://img.youtube.com/vi/4ZAIWmbt2KQ/sddefault.jpg)](https://youtu.be/4ZAIWmbt2KQ)
+
 ## What it does
 
 - Reads the live site (crawler checks, homepage links) and the site's repo, with read-only tools.
